@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f4f6f8;
+      color: #1a1a2e;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 3rem;
+    }
+
+    header {
+      margin-bottom: 2rem;
+    }
+
+    h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #16213e;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #5a6270;
+      font-size: 0.95rem;
+    }
+
+    section {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    h2 {
+      margin: 0 0 1rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #16213e;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      align-items: end;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #3d4450;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    input[type="date"] {
+      padding: 0.55rem 0.75rem;
+      border: 1px solid #c8ced6;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #3b6fd9;
+      box-shadow: 0 0 0 3px rgba(59, 111, 217, 0.15);
+    }
+
+    .form-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    button[type="submit"] {
+      padding: 0.6rem 1.25rem;
+      background: #3b6fd9;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button[type="submit"]:hover {
+      background: #2f5bb8;
+    }
+
+    .error {
+      color: #c0392b;
+      font-size: 0.85rem;
+      font-weight: 500;
+      min-height: 1.25rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 0.65rem 0.75rem;
+      background: #eef1f5;
+      color: #3d4450;
+      font-weight: 600;
+      border-bottom: 2px solid #d8dde4;
+    }
+
+    tbody td {
+      padding: 0.65rem 0.75rem;
+      border-bottom: 1px solid #e8ecf0;
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: #f8f9fb;
+    }
+
+    .amount-cell {
+      font-variant-numeric: tabular-nums;
+      font-weight: 500;
+    }
+
+    .delete-btn {
+      padding: 0.3rem 0.7rem;
+      background: #fff;
+      color: #c0392b;
+      border: 1px solid #e0b4b0;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .delete-btn:hover {
+      background: #fdf0ef;
+      border-color: #c0392b;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+
+    .empty-state p {
+      margin: 0;
+    }
+
+    .chart-wrapper {
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Expense Tracker</h1>
+      <p class="subtitle">Track spending by category. Data is saved in your browser.</p>
+    </header>
+
+    <section>
+      <h2>Add Expense</h2>
+      <form id="expense-form" novalidate>
+        <div class="field">
+          <label for="amount">Amount</label>
+          <input type="number" id="amount" name="amount" step="0.01" min="0.01" placeholder="0.00" required>
+        </div>
+        <div class="field">
+          <label for="category">Category</label>
+          <input type="text" id="category" name="category" placeholder="e.g. Food" required>
+        </div>
+        <div class="field">
+          <label for="description">Description</label>
+          <input type="text" id="description" name="description" placeholder="Optional details">
+        </div>
+        <div class="field">
+          <label for="date">Date</label>
+          <input type="date" id="date" name="date" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit">Add Expense</button>
+          <div id="form-error" class="error" role="alert" aria-live="polite"></div>
+        </div>
+      </form>
+    </section>
+
+    <section>
+      <h2>All Expenses</h2>
+      <div id="expenses-empty" class="empty-state hidden">
+        <p>No expenses yet. Add your first expense above to get started.</p>
+      </div>
+      <div id="expenses-table-wrap" class="hidden">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Category</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="expenses-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Spending by Category</h2>
+      <div id="summary-empty" class="empty-state hidden">
+        <p>Category summary will appear here once you add expenses.</p>
+      </div>
+      <div id="summary-content" class="hidden">
+        <table id="summary-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="summary-body"></tbody>
+        </table>
+        <div class="chart-wrapper">
+          <canvas id="category-chart" aria-label="Pie chart of spending by category"></canvas>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'expenses';
+    let expenses = [];
+    let chartInstance = null;
+
+    const form = document.getElementById('expense-form');
+    const formError = document.getElementById('form-error');
+    const dateInput = document.getElementById('date');
+    const expensesEmpty = document.getElementById('expenses-empty');
+    const expensesTableWrap = document.getElementById('expenses-table-wrap');
+    const expensesBody = document.getElementById('expenses-body');
+    const summaryEmpty = document.getElementById('summary-empty');
+    const summaryContent = document.getElementById('summary-content');
+    const summaryBody = document.getElementById('summary-body');
+    const chartCanvas = document.getElementById('category-chart');
+
+    function toTitleCase(str) {
+      return str
+        .trim()
+        .toLowerCase()
+        .split(/\s+/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(amount);
+    }
+
+    function formatDate(dateStr) {
+      const [year, month, day] = dateStr.split('-');
+      const date = new Date(Number(year), Number(month) - 1, Number(day));
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+
+    function loadExpenses() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        expenses = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(expenses)) expenses = [];
+      } catch {
+        expenses = [];
+      }
+    }
+
+    function saveExpenses() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+    }
+
+    function setTodayDefault() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      dateInput.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    function showError(message) {
+      formError.textContent = message;
+    }
+
+    function clearError() {
+      formError.textContent = '';
+    }
+
+    function validateForm(amountRaw, categoryRaw) {
+      const amount = parseFloat(amountRaw);
+      if (amountRaw === '' || isNaN(amount) || amount <= 0) {
+        return 'Amount must be a positive number.';
+      }
+      if (!categoryRaw.trim()) {
+        return 'Category cannot be empty.';
+      }
+      return null;
+    }
+
+    function renderExpensesTable() {
+      if (expenses.length === 0) {
+        expensesEmpty.classList.remove('hidden');
+        expensesTableWrap.classList.add('hidden');
+        expensesBody.innerHTML = '';
+        return;
+      }
+
+      expensesEmpty.classList.add('hidden');
+      expensesTableWrap.classList.remove('hidden');
+
+      const sorted = [...expenses].sort((a, b) => b.date.localeCompare(a.date));
+
+      expensesBody.innerHTML = sorted.map(expense => `
+        <tr>
+          <td>${formatDate(expense.date)}</td>
+          <td>${escapeHtml(expense.category)}</td>
+          <td>${escapeHtml(expense.description)}</td>
+          <td class="amount-cell">${formatCurrency(expense.amount)}</td>
+          <td>
+            <button type="button" class="delete-btn" data-id="${expense.id}">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function getCategoryTotals() {
+      const totals = {};
+      for (const expense of expenses) {
+        totals[expense.category] = (totals[expense.category] || 0) + expense.amount;
+      }
+      return Object.entries(totals).sort((a, b) => b[1] - a[1]);
+    }
+
+    function renderSummary() {
+      const categoryTotals = getCategoryTotals();
+
+      if (categoryTotals.length === 0) {
+        summaryEmpty.classList.remove('hidden');
+        summaryContent.classList.add('hidden');
+        summaryBody.innerHTML = '';
+        destroyChart();
+        return;
+      }
+
+      summaryEmpty.classList.add('hidden');
+      summaryContent.classList.remove('hidden');
+
+      summaryBody.innerHTML = categoryTotals.map(([category, total]) => `
+        <tr>
+          <td>${escapeHtml(category)}</td>
+          <td class="amount-cell">${formatCurrency(total)}</td>
+        </tr>
+      `).join('');
+
+      renderChart(categoryTotals);
+    }
+
+    function destroyChart() {
+      if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+      }
+    }
+
+    function renderChart(categoryTotals) {
+      destroyChart();
+
+      const labels = categoryTotals.map(([category]) => category);
+      const data = categoryTotals.map(([, total]) => total);
+
+      const palette = [
+        '#3b6fd9', '#e07a5f', '#81b29a', '#f2cc8f', '#9b5de5',
+        '#00bbf9', '#f15bb5', '#fee440', '#00f5d4', '#7b6f5d'
+      ];
+
+      chartInstance = new Chart(chartCanvas, {
+        type: 'pie',
+        data: {
+          labels,
+          datasets: [{
+            data,
+            backgroundColor: labels.map((_, i) => palette[i % palette.length]),
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { padding: 16, font: { size: 13 } }
+            },
+            tooltip: {
+              callbacks: {
+                label(context) {
+                  const value = context.parsed;
+                  const total = context.dataset.data.reduce((sum, n) => sum + n, 0);
+                  const pct = ((value / total) * 100).toFixed(1);
+                  return ` ${context.label}: ${formatCurrency(value)} (${pct}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function render() {
+      renderExpensesTable();
+      renderSummary();
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      clearError();
+
+      const amountRaw = document.getElementById('amount').value;
+      const categoryRaw = document.getElementById('category').value;
+      const description = document.getElementById('description').value.trim();
+      const date = document.getElementById('date').value;
+
+      const error = validateForm(amountRaw, categoryRaw);
+      if (error) {
+        showError(error);
+        return;
+      }
+
+      const expense = {
+        id: crypto.randomUUID(),
+        amount: parseFloat(amountRaw),
+        category: toTitleCase(categoryRaw),
+        description: description || '—',
+        date
+      };
+
+      expenses.push(expense);
+      saveExpenses();
+      render();
+
+      form.reset();
+      setTodayDefault();
+    });
+
+    expensesBody.addEventListener('click', (e) => {
+      const btn = e.target.closest('.delete-btn');
+      if (!btn) return;
+
+      const id = btn.dataset.id;
+      expenses = expenses.filter(exp => exp.id !== id);
+      saveExpenses();
+      render();
+    });
+
+    loadExpenses();
+    setTodayDefault();
+    render();
+  </script>
+</body>
+</html>

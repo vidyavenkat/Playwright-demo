@@ -1,0 +1,22 @@
+{
+  "name": "playwright-assessment",
+  "version": "1.0.0",
+  "description": "Playwright take-home assessment — SauceDemo UI automation",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:headless": "playwright test",
+    "test:parallel": "playwright test --workers=4",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "trace": "playwright show-trace"
+  },
+  "keywords": ["playwright", "saucedemo", "qa-automation"],
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.9.1"
+  }
+}

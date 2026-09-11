@@ -55,10 +55,27 @@ POM keeps locators and actions in page classes so specs stay readable and change
 
 1. **Organize by feature** — folders under `tests/` mirroring domains (auth, cart, checkout).
 2. **Add API Layer** — use Playwright `APIRequestContext` for test data setup, cleanup, and state preparation instead of UI flows.
-3. **Contract Testing** — add API contract validation to reduce expensive E2E coverage.
-4. **Fixtures & shared setup** — authenticated `page` fixtures to skip repeated login where safe.
-5. **Parallelism** — keep tests independent; use `fullyParallel` and shard in CI.
-6. **Observability** — track flaky tests, failure rate, execution duration, and coverage trends through dashboards.
-7. **Data factories** — generate users/products instead of hardcoding every case.
-8. **CI strategy** — smoke suite on PR, full suite on main/nightly; retries only in CI.
-9. **Components** — extract shared UI pieces (header, cart badge) to avoid page-class bloat.
+3. **Tagging Strategy** — tag tests so a 1000-case suite can run subsets instead of the full set:
+
+   | Tag | Purpose |
+   |-----|---------|
+   | `@smoke` | Fast PR gate: login plus one purchase path |
+   | `@regression` | Broader functional coverage on main/nightly |
+   | `@checkout` | Checkout-domain scenarios for focused local or CI runs |
+   | `@critical` | Must-not-break paths (auth and order complete) |
+
+   Annotate tests with `{ tag: ['@smoke', '@critical'] }` and run selectively:
+
+   ```bash
+   npx playwright test --grep @smoke
+   npx playwright test --grep @checkout
+   npx playwright test --grep "@smoke|@critical"
+   ```
+
+4. **Contract Testing** — add API contract validation to reduce expensive E2E coverage.
+5. **Fixtures & shared setup** — authenticated `page` fixtures to skip repeated login where safe.
+6. **Parallelism** — keep tests independent; use `fullyParallel` and shard in CI.
+7. **Observability** — track flaky tests, failure rate, execution duration, and coverage trends through dashboards.
+8. **Data factories** — generate users/products instead of hardcoding every case.
+9. **CI strategy** — smoke suite on PR, full suite on main/nightly; retries only in CI.
+10. **Components** — extract shared UI pieces (header, cart badge) to avoid page-class bloat.
